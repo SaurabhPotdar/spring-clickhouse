@@ -35,7 +35,10 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.testcontainers:clickhouse:1.19.7'
+	testImplementation ('org.testcontainers:clickhouse:1.19.7') {
+		exclude group: 'org.apache.commons', module: 'commons-compress'
+	}
+	testImplementation 'org.apache.commons:commons-compress:1.26.1'
 }
 
 tasks.named('test') {

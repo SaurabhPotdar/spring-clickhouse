@@ -34,7 +34,8 @@ class EmployeeControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private EmployeeService employeeService;
@@ -56,7 +57,11 @@ class EmployeeControllerTests {
                         .content(objectMapper.writeValueAsString(employee)))
                 .andExpect(status().isCreated());
 
-        assertEquals(1, employeeService.findAll().size());
+        List<Employee> employees = employeeService.findAll();
+        assertEquals(1, employees.size());
+        Employee savedEmployee = employees.get(0);
+        assertEquals("John Doe", savedEmployee.getName());
+        assertEquals(1000, savedEmployee.getSalary());
     }
 
     @Test
