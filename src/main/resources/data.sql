@@ -1,4 +1,6 @@
-CREATE TABLE employee
+CREATE DATABASE test_db ENGINE = Atomic
+
+CREATE TABLE IF NOT EXISTS test_db.employee
 (
     employee_id UInt32,
     name String,

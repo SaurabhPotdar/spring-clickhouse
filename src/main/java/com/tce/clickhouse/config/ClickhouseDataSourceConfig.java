@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -25,12 +26,13 @@ import java.util.Properties;
 
 @Slf4j
 @Configuration
+@Profile("!test")
 @EnableJpaRepositories(
         entityManagerFactoryRef = "clickhouseEntityManager",
         transactionManagerRef = "clickhouseTransactionManager",
         basePackages = {
-                "com.learn.clickhouse.entities",
-                "com.learn.clickhouse.repository"
+                "com.tce.clickhouse.entities",
+                "com.tce.clickhouse.repository"
         }
 )
 @RequiredArgsConstructor
@@ -81,7 +83,7 @@ public class ClickhouseDataSourceConfig {
         return builder
                 .dataSource(clickhouseDataSource())
                 .properties(getVendorProperties())
-                .packages("com.learn.spring.learnspring.entities.clickhouse")
+                .packages("com.tce.clickhouse.entities")
                 .persistenceUnit("clickhouseEntityManager")
                 .build();
     }
