@@ -1,7 +1,7 @@
 package com.tce.clickhouse.repository;
 
 import com.tce.clickhouse.entities.Employee;
-import jakarta.persistence.EntityManager;
+import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
