@@ -1,16 +1,14 @@
 package com.tce.clickhouse.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @ToString
-@Entity
 @Table(name = "employee", schema = "test_db")
 public class Employee {
 
@@ -19,6 +17,6 @@ public class Employee {
 
     private String name;
 
-    private int salary;
+    private Integer salary;
 
 }

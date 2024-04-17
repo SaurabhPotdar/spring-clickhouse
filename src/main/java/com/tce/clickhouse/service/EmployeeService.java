@@ -5,8 +5,10 @@ import com.tce.clickhouse.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -15,23 +17,27 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
 
     @Transactional(readOnly = true)
-    public List<Employee> findAll() {
+    public Flux<Employee> findAll() {
         return employeeRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public Employee findById(String id) {
-        return employeeRepository.findById(id).orElseThrow(() -> new RuntimeException("Employee not found"));
+    public Mono<Employee> findById(String id) {
+        return employeeRepository.findByEmployeeId(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Employee not found with ID: " + id)));
     }
 
     @Transactional
-    public Employee save(Employee employee) {
-        return employeeRepository.save(employee);
+    public Mono<Employee> save(Employee employee) {
+        final String uuid = UUID.randomUUID().toString();
+        employee.setId(uuid);
+        return employeeRepository.save(employee)
+                .thenReturn(employee);
     }
 
     @Transactional
-    public void deleteAll() {
-        employeeRepository.deleteAll();
+    public Mono<Void> deleteAll() {
+        return employeeRepository.delete();
     }
 
 }

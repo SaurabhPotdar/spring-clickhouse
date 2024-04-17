@@ -1,49 +1,54 @@
 package com.tce.clickhouse.repository;
 
 import com.tce.clickhouse.entities.Employee;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-@RequiredArgsConstructor
 public class EmployeeRepository {
 
-    private final EntityManager entityManager;
+    @Autowired
+    private ConnectionFactory connectionFactory;
 
-    public List<Employee> findAll() {
-        String sql = "SELECT id, name, salary FROM employee";
-        return (List<Employee>) entityManager.createNativeQuery(sql, Employee.class)
-                .getResultList();
+    public Mono<Employee> findByEmployeeId(String id) {
+        return Mono.from(connectionFactory.create())
+                .flatMapMany(conn -> conn.createStatement("SELECT id, name, salary FROM employee WHERE id = :id")
+                        .bind("id", id)
+                        .execute())
+                .flatMap(result -> result.map((row, rowMetadata) -> new Employee(row
+                        .get("id", String.class), row.get("name", String.class), row.get("salary", Integer.class))))
+                .singleOrEmpty();
     }
 
-    public Optional<Employee> findById(String id) {
-        String sql = "SELECT id, name, salary FROM employee WHERE id = :id";
-        Employee employee = (Employee) entityManager.createNativeQuery(sql, Employee.class)
-                .setParameter("id", id)
-                .getSingleResult();
-        return Optional.ofNullable(employee);
+    public Flux<Employee> findAll() {
+        return Mono.from(connectionFactory.create())
+                .flatMapMany(conn -> conn.createStatement("SELECT id, name, salary FROM employee").execute())
+                .flatMap(result -> result.map((row, rowMetadata) -> new Employee(row
+                        .get("id", String.class), row.get("name", String.class), row.get("salary", Integer.class))));
     }
 
-    public Employee save(Employee employee) {
-        String sql = "INSERT INTO employee (id, name, salary) VALUES (:id, :name, :salary)";
-        final String uuid = UUID.randomUUID().toString();
-        entityManager.createNativeQuery(sql)
-                .setParameter("id", uuid)
-                .setParameter("name", employee.getName())
-                .setParameter("salary", employee.getSalary())
-                .executeUpdate();
-        employee.setId(uuid);
-        return employee;
+    public Mono<Void> save(Employee employee) {
+        return Mono.from(connectionFactory.create())
+                .flatMapMany(conn -> execute(employee, conn)).then();
     }
 
-    public void deleteAll() {
-        String sql = "TRUNCATE TABLE employee";
-        entityManager.createNativeQuery(sql).executeUpdate();
+    private Publisher<? extends Result> execute(Employee employee, Connection conn) {
+        return conn.createStatement("insert into test_db.employee values (:id, :name, :salary)")
+                .bind("id", employee.getId())
+                .bind("name", employee.getName())
+                .bind("salary", employee.getSalary())
+                .execute();
+    }
+
+    public Mono<Void> delete() {
+        return Mono.from(connectionFactory.create())
+                .flatMapMany(conn -> conn.createStatement("TRUNCATE TABLE employee").execute()).then();
     }
 
 }

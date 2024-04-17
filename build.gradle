@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.4'
-	id 'io.spring.dependency-management' version '1.1.4'
+	id 'org.springframework.boot' version '3.2.5'
+	id 'io.spring.dependency-management' version '1.1.5'
 }
 
 group = 'com.tce'
@@ -22,23 +22,30 @@ repositories {
 	mavenCentral()
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch3'
-	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3-alpha2'
-	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4-alpha2'
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	final def clickhouseVersion = "0.6.0-patch5"
+	implementation("com.clickhouse:clickhouse-r2dbc:${clickhouseVersion}:http") {
+		//Exclude all transitive dependencies
+		exclude group: '*', module: '*'
+	}
+	//Caused by: java.lang.ClassNotFoundException: com.clickhouse.client.internal.apache.hc.core5.http.HttpRequest
+	implementation "com.clickhouse:clickhouse-http-client:${clickhouseVersion}"
 	implementation 'org.lz4:lz4-java:1.8.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation ('org.testcontainers:clickhouse:1.19.7') {
+	testImplementation ('org.testcontainers:clickhouse:1.19.8') {
 		exclude group: 'org.apache.commons', module: 'commons-compress'
 	}
 	testImplementation 'org.apache.commons:commons-compress:1.26.1'
+	testImplementation 'io.projectreactor:reactor-test'
+
 }
 
 tasks.named('test') {

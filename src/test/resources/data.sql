@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS default.employee
+CREATE DATABASE IF NOT EXISTS test_db ENGINE = Atomic;
+
+CREATE TABLE IF NOT EXISTS test_db.employee
 (
     id UUID,
     name String,
@@ -6,3 +8,8 @@ CREATE TABLE IF NOT EXISTS default.employee
 )
 ENGINE = MergeTree
 PRIMARY KEY (id);
+
+INSERT INTO test_db.employee (id, name, salary) VALUES
+(generateUUIDv4(), 'James', 100),
+(generateUUIDv4(), 'David', 200),
+(generateUUIDv4(), 'Bob', 300);
