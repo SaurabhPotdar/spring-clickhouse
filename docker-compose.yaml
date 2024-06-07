@@ -1,4 +1,3 @@
-version: '1'
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
@@ -10,6 +9,11 @@ services:
       - "9009:9009"
     volumes:
       - ./clickhouse:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+    networks:
+      - clickhouse-network
 
   clickhouse-client:
     image: clickhouse/clickhouse-client:latest
@@ -19,7 +23,14 @@ services:
       - clickhouse
     #Wait for clickhouse server to be ready
     entrypoint: ["bash", "-c", "until nc -zv clickhouse 9000; do sleep 1; done && clickhouse-client --host clickhouse"]
+    networks:
+      - clickhouse-network
 
-    #For connecting via clickhouse-client
-    #docker exec -it clickhouse-client bash
-    #clickhouse-client --host clickhouse
+networks:
+  clickhouse-network:
+    driver: bridge
+    name: clickhouse-network
+
+#For connecting via clickhouse-client
+#docker exec -it clickhouse-client bash
+#clickhouse-client --host clickhouse

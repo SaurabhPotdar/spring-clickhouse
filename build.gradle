@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.4'
-	id 'io.spring.dependency-management' version '1.1.4'
+	id 'org.springframework.boot' version '3.3.0'
+	id 'io.spring.dependency-management' version '1.1.5'
 }
 
 group = 'com.tce'
@@ -26,7 +26,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch3'
+	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch4'
 	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3-alpha2'
 	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4-alpha2'
 	implementation 'org.lz4:lz4-java:1.8.0'
@@ -35,7 +35,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation ('org.testcontainers:clickhouse:1.19.7') {
+	testImplementation ('org.testcontainers:clickhouse:1.19.8') {
 		exclude group: 'org.apache.commons', module: 'commons-compress'
 	}
 	testImplementation 'org.apache.commons:commons-compress:1.26.1'
