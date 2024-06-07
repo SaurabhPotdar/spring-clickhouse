@@ -33,7 +33,8 @@ dependencies {
 		exclude group: '*', module: '*'
 	}
 	//Caused by: java.lang.ClassNotFoundException: com.clickhouse.client.internal.apache.hc.core5.http.HttpRequest
-	implementation "com.clickhouse:clickhouse-http-client:${clickhouseVersion}"
+	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3-alpha2'
+	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4-alpha2'
 	implementation 'org.lz4:lz4-java:1.8.0'
 
 	compileOnly 'org.projectlombok:lombok'

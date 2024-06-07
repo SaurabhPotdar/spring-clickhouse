@@ -47,7 +47,9 @@ class EmployeeControllerTests extends AbstractIntegrationTest {
         assertEquals(response.getSalary(), fetchedEmployee.getSalary());
 
         //Cleanup
-        employeeService.deleteById(response.getId()).block();
+        employeeService.deleteById(response.getId())
+                .then().block();
+        assertThrows(RuntimeException.class, () -> employeeService.findById(response.getId()).block());
     }
 
     @Test
