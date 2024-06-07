@@ -27,8 +27,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	final def clickhouseVersion = "0.6.0-patch5"
-	implementation("com.clickhouse:clickhouse-r2dbc:${clickhouseVersion}:http") {
+	implementation("com.clickhouse:clickhouse-r2dbc:0.6.0-patch5:http") {
 		//Exclude all transitive dependencies
 		exclude group: '*', module: '*'
 	}
@@ -39,6 +38,11 @@ dependencies {
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	//For Flyway
+	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch4'
+	implementation 'org.flywaydb:flyway-core:10.14.0'
+	implementation 'org.flywaydb:flyway-database-clickhouse:10.12.0'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation ('org.testcontainers:clickhouse:1.19.8') {
