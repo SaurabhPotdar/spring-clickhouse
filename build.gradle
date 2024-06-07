@@ -26,10 +26,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch3'
+	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch4'
+	//https://github.com/Blynk-Technologies/clickhouse4j
+	//Clickhouse4j - lighter and faster alternative for the official ClickHouse JDBC driver
 	implementation ('cc.blynk.clickhouse:clickhouse4j:1.4.4') {
-		//https://github.com/Blynk-Technologies/clickhouse4j
-		//Clickhouse4j - lighter and faster alternative for the official ClickHouse JDBC driver
 		exclude group: 'org.slf4j', module: 'slf4j-api'
 		exclude group: 'org.slf4j', module: 'slf4j-nop'
 	}
@@ -38,7 +38,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation ('org.testcontainers:clickhouse:1.19.7') {
+	testImplementation ('org.testcontainers:clickhouse:1.19.8') {
 		exclude group: 'org.apache.commons', module: 'commons-compress'
 	}
 	testImplementation 'org.apache.commons:commons-compress:1.26.1'
