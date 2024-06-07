@@ -18,13 +18,24 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
         CLICKHOUSE_CONTAINER.withEnv("CLICKHOUSE_USER", "default");
         CLICKHOUSE_CONTAINER.withEnv("CLICKHOUSE_PASSWORD", "");
         CLICKHOUSE_CONTAINER.start();
+
+        // Create a database and use that in the url
+        try {
+            CLICKHOUSE_CONTAINER.execInContainer(
+                    "clickhouse-client",
+                    "--query",
+                    "CREATE DATABASE IF NOT EXISTS test_db ENGINE = Atomic;"
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create database in ClickHouse container", e);
+        }
     }
 
     @Override
     public void initialize(@NotNull ConfigurableApplicationContext applicationContext) {
         //This will set properties which are used by ClickhouseDataSourceConfig
         //r2dbc:clickhouse:http://{username}:{password}@{host}:{port}/{database}"
-        final String url = String.format("r2dbc:clickhouse:http://%s:%s@%s:%s", "default", "",
+        final String url = String.format("r2dbc:clickhouse:http://%s:%s@%s:%s/test_db", "default", "",
                 CLICKHOUSE_CONTAINER.getHost(), CLICKHOUSE_CONTAINER.getMappedPort(8123));
         TestPropertyValues values = TestPropertyValues.of(
                 "clickhouse.datasource.url=" + url

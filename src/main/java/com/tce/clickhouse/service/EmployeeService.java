@@ -40,4 +40,9 @@ public class EmployeeService {
         return employeeRepository.delete();
     }
 
+    @Transactional
+    public Mono<Void> deleteById(final String id) {
+        return employeeRepository.deleteById(id);
+    }
+
 }

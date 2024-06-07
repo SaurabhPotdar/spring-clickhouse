@@ -39,7 +39,7 @@ public class EmployeeRepository {
     }
 
     private Publisher<? extends Result> execute(Employee employee, Connection conn) {
-        return conn.createStatement("insert into test_db.employee values (:id, :name, :salary)")
+        return conn.createStatement("insert into employee values (:id, :name, :salary)")
                 .bind("id", employee.getId())
                 .bind("name", employee.getName())
                 .bind("salary", employee.getSalary())
@@ -49,6 +49,14 @@ public class EmployeeRepository {
     public Mono<Void> delete() {
         return Mono.from(connectionFactory.create())
                 .flatMapMany(conn -> conn.createStatement("TRUNCATE TABLE employee").execute()).then();
+    }
+
+    public Mono<Void> deleteById(String id) {
+        return Mono.from(connectionFactory.create())
+                .flatMapMany(conn -> conn.createStatement("DELETE FROM employee WHERE id = :id")
+                        .bind("id", id)
+                        .execute())
+                .then();
     }
 
 }

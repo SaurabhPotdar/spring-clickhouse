@@ -1,76 +1,83 @@
 package com.tce.clickhouse.tests;
 
-import com.tce.clickhouse.config.TestContainersInitializer;
+import com.tce.clickhouse.config.AbstractIntegrationTest;
+import com.tce.clickhouse.entities.Employee;
 import com.tce.clickhouse.service.EmployeeService;
-import io.r2dbc.spi.ConnectionFactory;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.util.FileCopyUtils;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.http.MediaType;
+import org.springframework.util.CollectionUtils;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(initializers = TestContainersInitializer.class)
-@ActiveProfiles("test")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class EmployeeControllerTests {
-
-    @Autowired
-    private ConnectionFactory connectionFactory;
-
-    @Value("classpath:data.sql")
-    private Resource sqlScript;
+class EmployeeControllerTests extends AbstractIntegrationTest {
 
     @Autowired
     private EmployeeService employeeService;
 
-    private void executeScriptBlocking() {
-        try {
-            final String sqlScriptContent = FileCopyUtils.copyToString(new InputStreamReader(sqlScript.getInputStream(), StandardCharsets.UTF_8));
-            // Split the script into individual statements
-            final String[] sqlStatements = sqlScriptContent.split(";");
+    @Test
+    public void testCreateEmployee() {
+        final Employee employee = new Employee();
+        employee.setName("Saurabh");
+        employee.setSalary(5000);
 
-            // Create a connection
-            Mono.from(connectionFactory.create())
-                    .flatMapMany(connection -> {
-                        // Convert each SQL statement into a Publisher
-                        return Flux.fromArray(sqlStatements)
-                                .filter(sql -> !sql.trim().isEmpty())  // Ignore empty statements
-                                .concatMap(sql -> {
-                                    // Execute each SQL statement and wait for its completion before executing the next one
-                                    return connection.createStatement(sql.trim()).execute();
-                                });
-                    })
-                    .then()
-                    .block();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load SQL script", e);
-        }
-    }
+        final Employee response = webTestClient.post()
+                .uri("/employees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(employee)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Employee.class)
+                .returnResult()
+                .getResponseBody();
 
-    @BeforeAll
-    public void rollOutTestData() {
-        executeScriptBlocking();
+        //Assert response
+        assertNotNull(response);
+        assertNotNull(response.getId());
+        assertEquals(employee.getName(), response.getName());
+        assertEquals(employee.getSalary(), response.getSalary());
+
+        //Fetch from DB and assert
+        final Employee fetchedEmployee = employeeService.findById(response.getId()).block();
+        assertNotNull(fetchedEmployee);
+        assertEquals(response.getId(), fetchedEmployee.getId());
+        assertEquals(response.getName(), fetchedEmployee.getName());
+        assertEquals(response.getSalary(), fetchedEmployee.getSalary());
+
+        //Cleanup
+        employeeService.deleteById(response.getId()).block();
     }
 
     @Test
-    public void testFindAll() {
-        employeeService.findAll().count().subscribe(count -> {
-            assertEquals(3, count);
-        });
+    public void testGetAllEmployees() {
+        final List<Employee> employees = webTestClient.get()
+                .uri("/employees")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Employee.class)
+                .returnResult()
+                .getResponseBody();
+        assertFalse(CollectionUtils.isEmpty(employees));
+        assertEquals(3, employees.size());
+    }
+
+    @Test
+    public void testGetEmployeeById() {
+        final String employeeId = "8c3bd10e-d01e-44c1-acd0-2c6f77bdec1b";
+        final Employee employee = webTestClient.get()
+                .uri("/employees/{id}", employeeId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Employee.class)
+                .returnResult()
+                .getResponseBody();
+
+        assertNotNull(employee);
+        assertEquals(employeeId, employee.getId());
+        assertEquals("David", employee.getName());
+        assertEquals(200, employee.getSalary());
     }
 
 }
