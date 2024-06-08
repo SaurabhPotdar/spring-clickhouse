@@ -2,7 +2,6 @@ package com.tce.clickhouse.service;
 
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
@@ -19,31 +18,32 @@ public class TestService {
     @Autowired
     private ConnectionFactory connectionFactory;
 
-    @Value("classpath:data.sql")
-    private Resource sqlScript;
-
-    public void executeScriptBlocking() {
+    public void executeScript(final Resource sqlScript) {
         try {
             final String sqlScriptContent = FileCopyUtils.copyToString(new InputStreamReader(sqlScript.getInputStream(), StandardCharsets.UTF_8));
             // Split the script into individual statements
-            final String[] sqlStatements = sqlScriptContent.split(";");
-
-            // Create a connection
-            Mono.from(connectionFactory.create())
-                    .flatMapMany(connection -> {
-                        // Convert each SQL statement into a Publisher
-                        return Flux.fromArray(sqlStatements)
-                                .filter(sql -> !sql.trim().isEmpty())  // Ignore empty statements
-                                .concatMap(sql -> {
-                                    // Execute each SQL statement and wait for its completion before executing the next one
-                                    return connection.createStatement(sql.trim()).execute();
-                                });
-                    })
-                    .then()
-                    .block();
+            executeScript(sqlScriptContent);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load SQL script", e);
         }
+    }
+
+    public void executeScript(final String sqlScriptContent) {
+        final String[] sqlStatements = sqlScriptContent.split(";");
+
+        // Create a connection
+        Mono.from(connectionFactory.create())
+                .flatMapMany(connection -> {
+                    // Convert each SQL statement into a Publisher
+                    return Flux.fromArray(sqlStatements)
+                            .filter(sql -> !sql.trim().isEmpty())  // Ignore empty statements
+                            .concatMap(sql -> {
+                                // Execute each SQL statement and wait for its completion before executing the next one
+                                return connection.createStatement(sql.trim()).execute();
+                            });
+                })
+                .then()
+                .block();
     }
 
 }

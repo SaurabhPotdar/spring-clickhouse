@@ -116,3 +116,118 @@ When we query ClickHouse which parts/granules to read based on a primary key. So
 ![Alt Text](photos/granule.png)
 
 In the above example, if we query for (A,2), then ClickHouse will read granule 2 and 3.
+
+# Table engines
+
+ClickHouse will merge data asynchronously in the background. The merge policy controls the merge process. The merge policy is defined by the MergeTree engine.
+
+1. MergeTree
+
+    ```sql
+    CREATE TABLE IF NOT EXISTS employee (
+        id UInt32,
+        name String,
+        value UInt32
+    ) ENGINE = MergeTree()
+    ORDER BY (id);
+     
+    INSERT INTO employee (id, name, value) VALUES (1, 'A', 10), (1, 'B', 20), (1, 'C', 30), (2, 'D', 40);
+    ```
+    ```sql
+    SELECT * FROM employee where id = 1;  -- Returns 3 rows
+    ```
+    ```sql
+    SELECT SUM(value) FROM employee;  -- Returns 100
+    ```
+    ```sql
+    SELECT * FROM employee FINAL where id = 1;  -- Throws an error
+    ```
+2. SummingMergeTree
+
+   Summarizes values for the columns with the numeric data type.
+
+    ```sql
+    CREATE TABLE IF NOT EXISTS employee (
+        id UInt32,
+        name String,
+        value UInt32
+    ) ENGINE = SummingMergeTree()
+    ORDER BY (id);
+
+    INSERT INTO employee (id, name, value) VALUES (1, 'A', 10), (1, 'B', 20), (1, 'C', 30), (2, 'D', 40);
+    ```
+    ```sql
+    SELECT * FROM employee where id = 1;  -- Returns 1 rows (1, 'A', 60)
+
+    SELECT SUM(value) FROM employee;  -- Returns 100
+    ```
+
+3. AggregatingMergeTree
+
+    ```sql
+    CREATE TABLE IF NOT EXISTS employee (
+        id UInt32,
+        name String,
+        value UInt32
+    ) ENGINE = MergeTree()
+    ORDER BY (id);
+    ```
+    ```sql
+    CREATE TABLE IF NOT EXISTS employee_agg (
+        id UInt32,
+        value AggregateFunction(sum, UInt32)
+    ) ENGINE = AggregatingMergeTree()
+    ORDER BY (id);
+    ```
+    ```sql
+    -- Every time we insert into employee, the employee_agg table will be updated
+    CREATE MATERIALIZED VIEW employee_mv TO employee_agg AS SELECT id, sumState(value) AS value FROM employee GROUP BY id;
+
+    INSERT INTO employee (id, name, value) VALUES (1, 'A', 10), (1, 'B', 20), (1, 'C', 30), (2, 'D', 40);
+    ```
+    ```sql
+    SELECT id, sumMerge(value) AS values FROM employee_agg GROUP BY id HAVING id = 1
+
+    SELECT id, sumMerge(value) AS values FROM employee_agg GROUP BY id;
+    ```
+
+4. ReplacingMergeTree
+
+   removes duplicate entries with the same sorting key value (ORDER BY table section, not PRIMARY KEY)
+
+    ```sql
+    CREATE TABLE IF NOT EXISTS employee (
+        id UInt32,
+        name String,
+        value UInt32
+    ) ENGINE = ReplacingMergeTree()
+    ORDER BY (id);
+
+    INSERT INTO employee (id, name, value) VALUES (1, 'A', 10), (1, 'B', 30), (1, 'C', 20), (2, 'D', 40);
+    ```
+    ```sql
+    SELECT * FROM employee where id = 1;  -- Returns last inserted row (1, 'C', 20)
+    ```
+    ```sql
+    SELECT SUM(value) FROM employee;  -- Returns 60
+    ```
+
+   ver — column with the version number.\
+   Type UInt*, Date, DateTime or DateTime64. Optional parameter.\
+   Returns row with max ver column.
+    ```sql
+    CREATE TABLE IF NOT EXISTS employee (
+        id UInt32,
+        name String,
+        value UInt32
+    ) ENGINE = ReplacingMergeTree()
+    ORDER BY (value);
+
+    INSERT INTO employee (id, name, value) VALUES (1, 'A', 10), (1, 'B', 30), (1, 'C', 20), (2, 'D', 40);
+    ```
+    ```sql
+    SELECT * FROM employee where id = 1;  -- Returns row with max ver column (1, 'B', 30)
+    ```
+    ```sql
+    SELECT SUM(value) FROM employee;  -- Returns 70
+    ```

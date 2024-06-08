@@ -3,8 +3,11 @@ package com.tce.clickhouse.tests;
 import com.tce.clickhouse.config.AbstractIntegrationTest;
 import com.tce.clickhouse.entities.Employee;
 import com.tce.clickhouse.service.EmployeeService;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 
@@ -16,6 +19,11 @@ class EmployeeControllerTests extends AbstractIntegrationTest {
 
     @Autowired
     private EmployeeService employeeService;
+
+    @BeforeAll
+    public void setUp(@Value("classpath:data.sql") final Resource sqlScript) {
+        testService.executeScript(sqlScript);
+    }
 
     @Test
     public void testCreateEmployee() {

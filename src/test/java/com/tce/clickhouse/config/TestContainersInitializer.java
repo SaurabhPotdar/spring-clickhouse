@@ -37,8 +37,13 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
         //r2dbc:clickhouse:http://{username}:{password}@{host}:{port}/{database}"
         final String url = String.format("r2dbc:clickhouse:http://%s:%s@%s:%s/test_db", "default", "",
                 CLICKHOUSE_CONTAINER.getHost(), CLICKHOUSE_CONTAINER.getMappedPort(8123));
+        final String flywayUrl = String.format("jdbc:clickhouse://%s:%s/test_db", CLICKHOUSE_CONTAINER.getHost(),
+                CLICKHOUSE_CONTAINER.getMappedPort(8123));
         TestPropertyValues values = TestPropertyValues.of(
-                "clickhouse.datasource.url=" + url
+                "clickhouse.datasource.url=" + url,
+                "spring.flyway.url=" + flywayUrl,
+                "spring.flyway.user=default",
+                "spring.flyway.password="
         );
         values.applyTo(applicationContext);
     }
