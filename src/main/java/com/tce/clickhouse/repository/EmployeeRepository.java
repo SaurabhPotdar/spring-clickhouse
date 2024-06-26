@@ -29,8 +29,8 @@ public class EmployeeRepository {
     public Flux<Employee> findAll() {
         return Mono.from(connectionFactory.create())
                 .flatMapMany(conn -> conn.createStatement("SELECT id, name, salary FROM employee").execute())
-                .flatMap(result -> result.map((row, rowMetadata) -> new Employee(row
-                        .get("id", String.class), row.get("name", String.class), row.get("salary", Integer.class))));
+                .flatMap(result -> result.map((row, rowMetadata) -> new Employee(row.get("id", String.class),
+                        row.get("name", String.class), row.get("salary", Integer.class))));
     }
 
     public Mono<Void> save(Employee employee) {
@@ -48,7 +48,8 @@ public class EmployeeRepository {
 
     public Mono<Void> delete() {
         return Mono.from(connectionFactory.create())
-                .flatMapMany(conn -> conn.createStatement("TRUNCATE TABLE employee").execute()).then();
+                .flatMapMany(conn -> conn.createStatement("TRUNCATE TABLE employee").execute())
+                .then();
     }
 
     public Mono<Void> deleteById(String id) {

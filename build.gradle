@@ -25,32 +25,34 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'io.r2dbc:r2dbc-pool'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	implementation("com.clickhouse:clickhouse-r2dbc:0.6.0-patch5:http") {
+	implementation("com.clickhouse:clickhouse-r2dbc:0.6.1:http") {
 		//Exclude all transitive dependencies
 		exclude group: '*', module: '*'
 	}
 	//Caused by: java.lang.ClassNotFoundException: com.clickhouse.client.internal.apache.hc.core5.http.HttpRequest
-	runtimeOnly 'org.apache.httpcomponents.core5:httpcore5:5.3-alpha2'
+	runtimeOnly 'org.apache.httpcomponents.core5:httpcore5:5.3-beta1'
 	runtimeOnly 'org.apache.httpcomponents.client5:httpclient5:5.4-alpha2'
 	runtimeOnly 'org.lz4:lz4-java:1.8.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
+	//For logging queries using r2dbc-proxy
+	implementation 'io.r2dbc:r2dbc-proxy:1.1.5.RELEASE'
+
 	//For Flyway
 	runtimeOnly 'com.clickhouse:clickhouse-jdbc:0.6.0-patch4'
-	implementation 'org.flywaydb:flyway-core:10.14.0'
+	implementation 'org.flywaydb:flyway-core:10.15.0'
 	runtimeOnly 'org.flywaydb:flyway-database-clickhouse:10.12.0'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation ('org.testcontainers:clickhouse:1.19.8') {
 		exclude group: 'org.apache.commons', module: 'commons-compress'
 	}
-	testImplementation 'org.apache.commons:commons-compress:1.26.1'
-	testImplementation 'io.projectreactor:reactor-test'
-
+	testRuntimeOnly 'org.apache.commons:commons-compress:1.26.1'
 }
 
 tasks.named('test') {

@@ -35,7 +35,7 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
     public void initialize(@NotNull ConfigurableApplicationContext applicationContext) {
         //This will set properties which are used by ClickhouseDataSourceConfig
         //r2dbc:clickhouse:http://{username}:{password}@{host}:{port}/{database}"
-        final String url = String.format("r2dbc:clickhouse:http://%s:%s@%s:%s/test_db", "default", "",
+        final String url = String.format("r2dbc:proxy:clickhouse:http://%s:%s@%s:%s/test_db", "default", "",
                 CLICKHOUSE_CONTAINER.getHost(), CLICKHOUSE_CONTAINER.getMappedPort(8123));
         final String flywayUrl = String.format("jdbc:clickhouse://%s:%s/test_db", CLICKHOUSE_CONTAINER.getHost(),
                 CLICKHOUSE_CONTAINER.getMappedPort(8123));
