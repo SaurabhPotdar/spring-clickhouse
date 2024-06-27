@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 
+import java.time.Duration;
+
 @Configuration
 @EnableR2dbcRepositories(
         basePackages = {
@@ -30,7 +32,10 @@ public class ClickhouseDataSourceConfig {
                 .build();
 
         final ConnectionPoolConfiguration configuration = ConnectionPoolConfiguration.builder(connectionFactory)
-                .maxSize(20)
+                .maxSize(20).initialSize(5)
+                .maxCreateConnectionTime(Duration.ofSeconds(5))
+                .maxIdleTime(Duration.ofMinutes(10))
+                .maxLifeTime(Duration.ofHours(1))
                 .build();
         return new ConnectionPool(configuration);
     }

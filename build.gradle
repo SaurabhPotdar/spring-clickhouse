@@ -44,7 +44,7 @@ dependencies {
 	implementation 'io.r2dbc:r2dbc-proxy:1.1.5.RELEASE'
 
 	//For Flyway
-	runtimeOnly 'com.clickhouse:clickhouse-jdbc:0.6.0-patch4'
+	runtimeOnly 'com.clickhouse:clickhouse-jdbc:0.6.1:http'
 	implementation 'org.flywaydb:flyway-core:10.15.0'
 	runtimeOnly 'org.flywaydb:flyway-database-clickhouse:10.12.0'
 

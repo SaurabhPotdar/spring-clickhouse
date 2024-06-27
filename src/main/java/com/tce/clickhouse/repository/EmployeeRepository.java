@@ -1,14 +1,14 @@
 package com.tce.clickhouse.repository;
 
 import com.tce.clickhouse.entities.Employee;
-import io.r2dbc.spi.Connection;
+import com.tce.clickhouse.util.DatabaseUtils;
 import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.Result;
-import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Repository
 public class EmployeeRepository {
@@ -17,46 +17,39 @@ public class EmployeeRepository {
     private ConnectionFactory connectionFactory;
 
     public Mono<Employee> findByEmployeeId(String id) {
-        return Mono.from(connectionFactory.create())
-                .flatMapMany(conn -> conn.createStatement("SELECT id, name, salary FROM employee WHERE id = :id")
-                        .bind("id", id)
-                        .execute())
+        return DatabaseUtils.executeQuery(connectionFactory,
+                        "SELECT * FROM employee WHERE id = :id",
+                        Map.of("id", id))
                 .flatMap(result -> result.map((row, rowMetadata) -> new Employee(row
                         .get("id", String.class), row.get("name", String.class), row.get("salary", Integer.class))))
                 .singleOrEmpty();
     }
 
     public Flux<Employee> findAll() {
-        return Mono.from(connectionFactory.create())
-                .flatMapMany(conn -> conn.createStatement("SELECT id, name, salary FROM employee").execute())
+        return DatabaseUtils.executeQuery(connectionFactory, "SELECT * FROM employee")
                 .flatMap(result -> result.map((row, rowMetadata) -> new Employee(row.get("id", String.class),
                         row.get("name", String.class), row.get("salary", Integer.class))));
     }
 
     public Mono<Void> save(Employee employee) {
-        return Mono.from(connectionFactory.create())
-                .flatMapMany(conn -> execute(employee, conn)).then();
-    }
-
-    private Publisher<? extends Result> execute(Employee employee, Connection conn) {
-        return conn.createStatement("insert into employee values (:id, :name, :salary)")
-                .bind("id", employee.getId())
-                .bind("name", employee.getName())
-                .bind("salary", employee.getSalary())
-                .execute();
-    }
-
-    public Mono<Void> delete() {
-        return Mono.from(connectionFactory.create())
-                .flatMapMany(conn -> conn.createStatement("TRUNCATE TABLE employee").execute())
+        return DatabaseUtils.executeQuery(connectionFactory,
+                        "INSERT INTO employee (id, name, salary) VALUES (:id, :name, :salary)",
+                        Map.of(
+                                "id", employee.getId(),
+                                "name", employee.getName(),
+                                "salary", employee.getSalary()))
                 .then();
     }
 
+    public Mono<Void> delete() {
+        return DatabaseUtils.executeQuery(connectionFactory,
+                "TRUNCATE TABLE employee").then();
+    }
+
     public Mono<Void> deleteById(String id) {
-        return Mono.from(connectionFactory.create())
-                .flatMapMany(conn -> conn.createStatement("DELETE FROM employee WHERE id = :id")
-                        .bind("id", id)
-                        .execute())
+        return DatabaseUtils.executeQuery(connectionFactory,
+                        "DELETE FROM employee WHERE id = :id",
+                        Map.of("id", id))
                 .then();
     }
 
