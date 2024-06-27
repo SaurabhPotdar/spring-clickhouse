@@ -36,13 +36,14 @@ public class EmployeeService {
     }
 
     @Transactional
-    public Mono<Void> deleteAll() {
-        return employeeRepository.delete();
+    public Mono<Void> deleteById(final String id) {
+        return employeeRepository.deleteById(id);
     }
 
     @Transactional
-    public Mono<Void> deleteById(final String id) {
-        return employeeRepository.deleteById(id);
+    public Mono<Void> testTransaction(Employee employee) {
+        return employeeRepository.save(employee)
+                .then(Mono.error(new RuntimeException("Transaction test exception")));
     }
 
 }
