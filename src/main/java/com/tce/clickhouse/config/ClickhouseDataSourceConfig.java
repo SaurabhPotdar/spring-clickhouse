@@ -2,10 +2,12 @@ package com.tce.clickhouse.config;
 
 import com.clickhouse.client.config.ClickHouseClientOption;
 import com.clickhouse.jdbc.ClickHouseDataSource;
+import com.p6spy.engine.spy.P6DataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateProperties;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings;
@@ -13,7 +15,6 @@ import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -26,7 +27,6 @@ import java.util.Properties;
 
 @Slf4j
 @Configuration
-@Profile("!test")
 @EnableJpaRepositories(
         entityManagerFactoryRef = "clickhouseEntityManager",
         transactionManagerRef = "clickhouseTransactionManager",
@@ -54,6 +54,9 @@ public class ClickhouseDataSourceConfig {
 //    @Value("${spring.datasource.clickhouse.password}")
 //    private String password;
 
+    @Value("${spring.application.name}")
+    private String appName;
+
     private final JpaProperties jpaProperties;
 
     private final HibernateProperties hibernateProperties;
@@ -70,18 +73,22 @@ public class ClickhouseDataSourceConfig {
 
     @Bean(name = "clickhouseDataSource")
     public DataSource clickhouseDataSource() throws SQLException {
-        HikariConfig hikariConfig = new HikariConfig();
+        final HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setDataSource(getClickhouseDataSource());
-        hikariConfig.setPoolName("clickhouseDataSourcePool");
         hikariConfig.setDriverClassName(driverClassName);
-
-        return new HikariDataSource(hikariConfig);
+        hikariConfig.setPoolName(appName + "-pool");
+        hikariConfig.setMinimumIdle(2);
+        hikariConfig.setIdleTimeout(120000L);
+        hikariConfig.setMaximumPoolSize(10);
+        hikariConfig.setRegisterMbeans(true);
+        return new P6DataSource(new HikariDataSource(hikariConfig));
     }
 
     @Bean(name = "clickhouseEntityManager")
-    public LocalContainerEntityManagerFactoryBean clickhouseEntityManager(EntityManagerFactoryBuilder builder) throws SQLException {
+    public LocalContainerEntityManagerFactoryBean clickhouseEntityManager(@Qualifier("clickhouseDataSource") final DataSource dataSource,
+                                                                          final EntityManagerFactoryBuilder builder) {
         return builder
-                .dataSource(clickhouseDataSource())
+                .dataSource(dataSource)
                 .properties(getVendorProperties())
                 .packages("com.tce.clickhouse.entities")
                 .persistenceUnit("clickhouseEntityManager")
@@ -89,17 +96,16 @@ public class ClickhouseDataSourceConfig {
     }
 
     private Map<String, Object> getVendorProperties() {
-        Map<String, String> properties = jpaProperties.getProperties();
+        final Map<String, String> properties = jpaProperties.getProperties();
         properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
         return hibernateProperties.determineHibernateProperties(
                 properties, new HibernateSettings());
     }
 
     @Bean(name = "clickhouseTransactionManager")
-    public PlatformTransactionManager clickhouseTransactionManager(LocalContainerEntityManagerFactoryBean clickhouseEntityManager) {
-        JpaTransactionManager txManager = new JpaTransactionManager();
+    public PlatformTransactionManager clickhouseTransactionManager(final LocalContainerEntityManagerFactoryBean clickhouseEntityManager) {
+        final JpaTransactionManager txManager = new JpaTransactionManager();
         txManager.setEntityManagerFactory(clickhouseEntityManager.getObject());
-
         return txManager;
     }
 

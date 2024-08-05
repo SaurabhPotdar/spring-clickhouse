@@ -26,13 +26,21 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation 'com.clickhouse:clickhouse-jdbc:0.6.0-patch4'
+	implementation 'com.clickhouse:clickhouse-jdbc:0.6.3'
+	//java.lang.NoClassDefFoundError: org/apache/hc/core5/http/NoHttpResponseException
+	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3-alpha2'
+	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4-alpha2'
+	implementation 'org.lz4:lz4-java:1.8.0'
+
 	//https://github.com/Blynk-Technologies/clickhouse4j
 	//Clickhouse4j - lighter and faster alternative for the official ClickHouse JDBC driver
 	implementation ('cc.blynk.clickhouse:clickhouse4j:1.4.4') {
 		exclude group: 'org.slf4j', module: 'slf4j-api'
 		exclude group: 'org.slf4j', module: 'slf4j-nop'
 	}
+
+	//p6spy dependencies
+	implementation 'p6spy:p6spy:3.9.1'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

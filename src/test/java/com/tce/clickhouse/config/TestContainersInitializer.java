@@ -16,14 +16,22 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
         CLICKHOUSE_CONTAINER = new GenericContainer<>(imageName);
         CLICKHOUSE_CONTAINER.withExposedPorts(8123);
         CLICKHOUSE_CONTAINER.start();
+
+        try {
+            CLICKHOUSE_CONTAINER.execInContainer(
+                    "clickhouse-client", "--query", "CREATE DATABASE IF NOT EXISTS test_db ENGINE = Atomic;"
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create database in ClickHouse container", e);
+        }
     }
 
     @Override
     public void initialize(@NotNull ConfigurableApplicationContext applicationContext) {
         TestPropertyValues values = TestPropertyValues.of(
-                "spring.datasource.url=" + "jdbc:clickhouse://" + CLICKHOUSE_CONTAINER.getHost() + ":" + CLICKHOUSE_CONTAINER.getMappedPort(8123),
-                "spring.datasource.username=" + "default",
-                "spring.datasource.password="
+                "spring.datasource.clickhouse.url=" + "jdbc:clickhouse://" + CLICKHOUSE_CONTAINER.getHost() + ":" + CLICKHOUSE_CONTAINER.getMappedPort(8123),
+                "spring.datasource.clickhouse.username=" + "default",
+                "spring.datasource.clickhouse.password="
         );
         values.applyTo(applicationContext);
     }
